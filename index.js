@@ -87,9 +87,6 @@ var io = {
             } catch (err) {
                 console.log('stat error:', path, err);
             }
-            if (data.relativePath === null) {
-                console.log(data);
-            }
         }
         walk(rootPath);
     },
