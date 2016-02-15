@@ -1,8 +1,14 @@
 'use strict';
-var fs = require('fs');
+var FS = require('fs');
 var PATH = require('path');
 var child_process = require('child_process');
-
+const _checkRuler = (ruler, string) => {
+    if (Object.prototype.toString.call(ruler) === '[object RegExp]') {
+        return ruler.test(string);
+    } else {
+        return string.indexOf(ruler) > -1;
+    }
+}
 var io = {
     /*
     递归处理文件,文件夹
@@ -12,46 +18,77 @@ var io = {
     walkHandle 文件,文件夹处理函数
 
     */
-    walkSync: function(rootPath, walkHandle, ignoreFiles, preventDefault) {
-        var defaultIgnoreFiles = preventDefault ? [] : [/^\./, /^node_modules$/];
-        var _floor = 0;
-        rootPath = PATH.normalize(rootPath);
+    walkSync: (rootPath, walkHandle, ignoreFiles, preventDefault, maxCount) => {
+        if (typeof rootPath === 'object') {
+            let config = rootPath;
+            rootPath = config.rootPath;
+            walkHandle = config.walkHandle;
+            ignoreFiles = config.ignoreFiles;
+            preventDefault = config.preventDefault;
+            maxCount = config.maxCount;
+        }
+
+        let defaultIgnoreFiles = preventDefault ? [] : [/\.svn\/$/, /\.git\/$/, /.gitignore$/, /.npmignore$/, /node_modules\/$/, /\.DS_Store$/, ];
+        maxCount = maxCount || Infinity;
+        rootPath = PATH.resolve(rootPath);
+        console.log(rootPath);
         ignoreFiles = ignoreFiles || [];
         ignoreFiles = defaultIgnoreFiles.concat(ignoreFiles);
 
-        function walk(path) {
+        let _count = 0;
+        const walk = (path) => {
+            let data = {
+                type: null,
+                path: null,
+                absolutePath: null,
+                relativePath: null,
+                rootPath: rootPath + '/',
+            };
             try {
-                var stats = fs.statSync(path);
-                var data = {
-                    path: path
-                };
-                var i, files, len, _path;
-                var j, file;
-                if (stats.isDirectory(path)) {
+                if (FS.statSync(path).isDirectory(path)) {
                     data.type = 'directory';
                     try {
-                        files = fs.readdirSync(path);
-                        $i: for (i = 0, len = files.length; i < len; ++i) {
-                            file = files[i];
-                            for(j = 0; j < ignoreFiles.length; ++j) {
-                                if(ignoreFiles[j].test(file)) {
-                                    // console.log(i, j, file);
-                                    continue $i;
-                                };
+                        let files = FS.readdirSync(path);
+                        let filesLen = files.length;
+                        if (!filesLen) return;
+
+                        $i: for (let i = 0; i < filesLen; ++i) {
+                            if (_count >= maxCount) {
+                                return;
                             }
-                            _path = PATH.join(path, files[i]);
-                            walk(_path);
+                            let file = files[i];
+                            let absolutePath = PATH.join(path, file);
+                            let relativePath = PATH.relative(rootPath, absolutePath);
+                            try {
+                                if (FS.statSync(absolutePath).isDirectory(absolutePath)) {
+                                    absolutePath += '/';
+                                    relativePath += '/';
+                                }
+                            } catch (err) {}
+                            data.relativePath = relativePath;
+                            data.path = data.absolutePath = absolutePath;
+                            $j: for (let j = 0, len = ignoreFiles.length; j < len; ++j) {
+                                if (_checkRuler(ignoreFiles[j], relativePath)) {
+                                    // console.log(i, j, absolutePath);
+                                    continue $i;
+                                }
+                            }
+                            walk(absolutePath);
                         }
                     } catch (err) {
-                        console.log('read dir error:', err);
+                        console.log('read dir error:', path, err);
                     }
                 } else {
                     data.type = 'file';
+                    data.path = data.absolutePath = path;
+                    data.relativePath = PATH.relative(rootPath, data.path);
                 }
-                walkHandle(data, _floor);
-                _floor++;
+                walkHandle(data, ++_count);
             } catch (err) {
-                console.log('stat error:', err);
+                console.log('stat error:', path, err);
+            }
+            if (data.relativePath === null) {
+                console.log(data);
             }
         }
         walk(rootPath);
@@ -62,10 +99,10 @@ var io = {
             dirNames = path.split(/[\/\\]/);
         for (i = 0; i < dirNames.length; i++) {
             currentPath += (i === 0 ? '' : '/') + dirNames[i];
-            if (fs.existsSync(currentPath)) {
+            if (FS.existsSync(currentPath)) {
                 continue;
             }
-            fs.mkdirSync(currentPath);
+            FS.mkdirSync(currentPath);
         }
     },
 }

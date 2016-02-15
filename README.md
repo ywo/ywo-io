@@ -1,3 +1,10 @@
+## 更新 2016/02/15
+ * 增加maxCount遍历若干条资源，方便调试
+ * 增加对象形式配置方法
+ * 文件夹路径全部以/结尾
+ * 增加relativePath, absolutePath回传，data.path === data.absolutePath
+ * 默认增加对.DS_Store, .npmignore, .gitignore, .idea 目录过滤
+
 ## 遍历文件
 ```
 let ywoIo = require('ywo-io')
