@@ -15,14 +15,14 @@ var io = {
     path 路径
     ignoreFiles 规则 [.js, .css, .html...]
     _floor 层数
-    walkHandle 文件,文件夹处理函数
+    walkHandler 文件,文件夹处理函数
 
     */
-    walkSync: (rootPath, walkHandle, ignoreFiles, preventDefault, maxCount) => {
+    walkSync: (rootPath, walkHandler, ignoreFiles, preventDefault, maxCount) => {
         if (typeof rootPath === 'object') {
             let config = rootPath;
             rootPath = config.rootPath;
-            walkHandle = config.walkHandle;
+            walkHandler = config.walkHandler;
             ignoreFiles = config.ignoreFiles;
             preventDefault = config.preventDefault;
             maxCount = config.maxCount;
@@ -83,7 +83,7 @@ var io = {
                     data.path = data.absolutePath = path;
                     data.relativePath = PATH.relative(rootPath, data.path);
                 }
-                walkHandle(data, ++_count);
+                walkHandler(data, ++_count);
             } catch (err) {
                 console.log('stat error:', path, err);
             }
