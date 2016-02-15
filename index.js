@@ -28,7 +28,7 @@ var io = {
             maxCount = config.maxCount;
         }
 
-        let defaultIgnoreFiles = preventDefault ? [] : [/\.svn\/$/, /\.git\/$/, /.gitignore$/, /.npmignore$/, /node_modules\/$/, /\.DS_Store$/, ];
+        let defaultIgnoreFiles = preventDefault ? [] : [/\.svn\/$/, /\.git\/$/, /\.idea\/$/, /.gitignore$/, /.npmignore$/, /node_modules\/$/, /\.DS_Store$/, ];
         maxCount = maxCount || Infinity;
         rootPath = PATH.resolve(rootPath);
         console.log(rootPath);
